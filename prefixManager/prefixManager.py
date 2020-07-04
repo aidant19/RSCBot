@@ -39,7 +39,7 @@ class PrefixManager(commands.Cog):
             for prefixStr in prefixes_to_add:
                 prefix = ast.literal_eval(prefixStr)
                 await ctx.send("Adding prefix: {0}".format(repr(prefix)))
-                prefixAdded = await self._add_prefix(ctx, *prefix)
+                prefixAdded = await self.add_prefix(ctx, *prefix)
                 if prefixAdded:
                     addedCount += 1
         finally:
@@ -177,7 +177,7 @@ class PrefixManager(commands.Cog):
             del prefixes[gm_name]
         except ValueError:
             await ctx.send("{0} does not have a prefix.".format(gm_name))
-            return
+            return False
         await self._save_prefixes(ctx, prefixes)
         return True
 
