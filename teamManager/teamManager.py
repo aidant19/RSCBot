@@ -319,32 +319,6 @@ class TeamManager(commands.Cog):
             await self._save_tiers(ctx, tiers)
             await ctx.send("Done.")
 
-    @commands.command()
-    @commands.guild_only()
-    @checks.admin_or_permissions(manage_guild=True)
-    async def clearTiers(self, ctx):
-        """Clears all tiers using the removeTier function"""
-
-    msg = await ctx.send("You are about to remove all tiers. Please confirm.")
-    start_adding_reactions(msg, ReactionPredicate.YES_OR_NO_EMOJIS)
-
-    pred = ReactionPredicate.yes_or_no(msg, ctx.author)
-    try:
-        await ctx.bot.wait_for("reaction_add", check=pred, timeout=verify_timeout)
-        if pred.result is True:
-            pass
-        else:
-            await ctx.send("Aborting command to remove tiers.")
-            return
-    except asyncio.TimeoutError:
-        await ctx.send("Command to remove tiers timed out")
-        return
-
-    tiers = await self.tiers(ctx)
-    for tier_name in tiers:
-        await ctx.send("Removing {0}...".format(tier_name))
-        self.removeTier(ctx, tier_name)
-
     @commands.command(aliases=["getTeams"])
     @commands.guild_only()
     async def listTeams(self, ctx):
