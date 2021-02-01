@@ -63,7 +63,6 @@ class Transactions(commands.Cog):
                 await ctx.send(":x: Free agent role not found in server")
             return
 
-
     @commands.guild_only()
     @commands.command()
     @checks.admin_or_permissions(manage_roles=True)
@@ -103,7 +102,7 @@ class Transactions(commands.Cog):
                     role_name = "{0}FA".format((await self.team_manager_cog.get_current_tier_role(ctx, user)).name)
                     tier_fa_role = self.team_manager_cog._find_role_by_name(ctx, role_name)
                 fa_role = self.team_manager_cog._find_role_by_name(ctx, "Free Agent")
-                await user.edit(nick="FA | {0}".format(self.get_player_nickname(user)))
+                await self.team_manager_cog._set_user_nickname_prefix(ctx, "FA", user)
                 await user.add_roles(tier_fa_role, fa_role)
                 gm_name = self._get_gm_name(ctx, franchise_role)
                 message = "{0} was cut by the {1} ({2} - {3})".format(user.mention, team_name, gm_name, tier_role.name)
@@ -230,6 +229,7 @@ class Transactions(commands.Cog):
         await self._save_trans_channel(ctx, None)
         await ctx.send("Done")
 
+
     async def add_player_to_team(self, ctx, user, team_name):
         franchise_role, tier_role = await self.team_manager_cog._roles_for_team(ctx, team_name)
         # if franchise_role in user.roles and tier_role in user.roles:
@@ -243,9 +243,8 @@ class Transactions(commands.Cog):
                 currentTier = await self.team_manager_cog.get_current_tier_role(ctx, user)
                 if currentTier is not None and currentTier != tier_role:
                     await user.remove_roles(currentTier)
-                await user.edit(nick="{0} | {1}".format(prefix, self.get_player_nickname(user)))
+                await self.team_manager_cog._set_user_nickname_prefix(ctx, prefix, user)
                 await user.add_roles(tier_role, leagueRole, franchise_role)
-
 
     async def remove_player_from_team(self, ctx, user, team_name):
         franchise_role, tier_role = await self.team_manager_cog._roles_for_team(ctx, team_name)
@@ -280,6 +279,9 @@ class Transactions(commands.Cog):
 
     def get_player_nickname(self, user : discord.Member):
         return self.team_manager_cog.get_player_nickname(user)
+    
+    async def set_user_nickname_prefix(self, ctx, prefix: str, user: discord.member):
+        return self.team_manager_cog._set_user_nickname_prefix(ctx, prefix, user)
 
     async def get_tier_role_for_fa(self, ctx, user : discord.Member):
         fa_roles = await self.find_user_free_agent_roles(ctx, user)
