@@ -94,7 +94,7 @@ class BCManager(commands.cog):
             old_rank = tier_ranks['tier']
         
         if old_rank != rank:
-            await ctx.send("The {} Rank was changed from {} to {}."format(tier=tier.Title(), old_rank=old_rank, new_rank=rank))
+            await ctx.send("The {} Rank was changed from {} to {}".format(tier=tier.Title(), old_rank=old_rank, new_rank=rank))
         else:
             await ctx.send("Done")
 
