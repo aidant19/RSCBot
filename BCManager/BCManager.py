@@ -84,7 +84,7 @@ class BCManager(commands.cog):
         tiers = await team_manager_cog.tiers(ctx)
         tier_found = False
         for t in tiers:
-            if t.lower() == tier.lower()
+            if t.lower() == tier.lower():
                 tier_found = True
                 break
         
