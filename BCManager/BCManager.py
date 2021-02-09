@@ -1,5 +1,5 @@
 
-import config
+From .BCManager import config
 import requests
 from datetime import datetime, timezone
 import os
