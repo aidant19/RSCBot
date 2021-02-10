@@ -387,7 +387,7 @@ class BCManager(commands.Cog):
 
         member_id = member.id
         if member.id in await self._get_account_register(ctx):
-            uploader = await self._get_uploader_id(member.id)
+            uploader = await self._get_uploader_id(ctx, member.id)
         else:
             # Return empty for now
             await ctx.send(":x: No steam account linked to ballchasing.com")
