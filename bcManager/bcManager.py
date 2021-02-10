@@ -302,7 +302,8 @@ class BCManager(commands.Cog):
         if not match_day:
             match_day = await self.match_cog._match_day(ctx)
         if not team:
-            team = await self.team_manager_cog.teams_for_user(ctx, member)[0]
+            teams = await self.team_manager_cog.teams_for_user(ctx, member)
+            team = teams[0]
         
         match = await self.match_cog.get_match_from_day_team(ctx, match_day, team)
         return match
