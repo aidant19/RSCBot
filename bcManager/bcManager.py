@@ -372,7 +372,7 @@ class BCManager(commands.Cog):
                     'player_identification': config.player_identification,
                     'team_identification': config.team_identification
                 }
-                r = self._bc_post_request(ctx, endpoint, auth_token=auth_token, json=payload)
+                r = await self._bc_post_request(ctx, endpoint, auth_token=auth_token, json=payload)
                 data = r.json()
                 
                 try:
