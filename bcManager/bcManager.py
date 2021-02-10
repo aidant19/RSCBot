@@ -276,6 +276,7 @@ class BCManager(commands.Cog):
         return player_id
 
     async def _get_uploader_id(self, ctx, discord_id):
+        await ctx.send("Uploader id: " + discord_id)
         account_register = await self._get_account_register(ctx)
         steam64 = account_register[discord_id][1]
         return steam64
