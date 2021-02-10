@@ -265,7 +265,7 @@ class BCManager(commands.Cog):
     async def _get_steam_id_from_token(self, ctx, auth_token=None):
         if not auth_token:
             auth_token = await self._get_auth_token(ctx)
-        r = self._bc_get_request("")
+        r = self._bc_get_request(ctx, "")
         if r.status_code == 200:
             return r.json()['steam_id']
         return None
@@ -361,7 +361,7 @@ class BCManager(commands.Cog):
                     'group={}'.format(next_subgroup_id)
                 ]
 
-                r = self._bc_get_request(endpoint, params, auth_token)
+                r = self._bc_get_request(ctx, endpoint, params, auth_token)
                 data = r.json()
 
             # ## Creating next sub-group
