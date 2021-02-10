@@ -9,6 +9,8 @@ import discord
 from redbot.core import Config
 from redbot.core import commands
 from redbot.core import checks
+from redbot.core.utils.predicates import ReactionPredicate
+from redbot.core.utils.menus import start_adding_reactions
 
 import sys
 import pprint as pp
@@ -81,7 +83,7 @@ class BCManager(commands.Cog):
     @commands.guild_only()
     @checks.admin_or_permissions(manage_guild=True)
     async def setTierRank(self, ctx, tier, rank):
-        tiers = await team_manager_cog.tiers(ctx)
+        tiers = await self.team_manager_cog.tiers(ctx)
         tier_found = False
         for t in tiers:
             if t.lower() == tier.lower():
