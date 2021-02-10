@@ -326,7 +326,7 @@ class BCManager(commands.Cog):
         ]
 
         endpoint = '/groups'
-        # bc_group_owner = await self._get_uploader_id(ctx, group_owner_discord_id)  # config.group_owner_discord_id
+        bc_group_owner = await self._get_uploader_id(ctx, group_owner_discord_id)  # config.group_owner_discord_id
         
         params = [
             # 'player-id={}'.format(bcc_acc_rsc),
@@ -371,7 +371,7 @@ class BCManager(commands.Cog):
                     'player_identification': config.player_identification,
                     'team_identification': config.team_identification
                 }
-                r = bc_post_request(ctx, endpoint, auth_token=auth_token, json=payload)
+                r = self._bc_post_request(ctx, endpoint, auth_token=auth_token, json=payload)
                 data = r.json()
                 
                 try:
@@ -382,7 +382,7 @@ class BCManager(commands.Cog):
             
         return next_subgroup_id
 
-    async def _find_match_replays(ctx, member, match):
+    async def _find_match_replays(self, ctx, member, match):
 
         member_id = member.id
         if member.id in await self._get_account_register(ctx):
@@ -424,12 +424,12 @@ class BCManager(commands.Cog):
         # checks for correct replays
         replay_ids = []
         for replay in data['list']:
-            if is_match_replay(match, replay):
+            if self.is_match_replay(match, replay):
                 replay_ids.append(replay['id'])
 
         return replay_ids
 
-    async def _download_replays(ctx, replay_ids):
+    async def _download_replays(self, ctx, replay_ids):
         auth_token = await self._get_auth_token(ctx)
         tmp_replay_files = []
         this_game = 1
@@ -450,7 +450,7 @@ class BCManager(commands.Cog):
 
         return tmp_replay_files
 
-    async def _upload_replays(ctx, subgroup_id, files_to_upload):
+    async def _upload_replays(self, ctx, subgroup_id, files_to_upload):
         endpoint = "/v2/upload"
         params = [
             'visibility={}'.format(config.visibility),
@@ -476,7 +476,7 @@ class BCManager(commands.Cog):
         
         return replay_ids_in_group
         
-    async def _rename_replays(ctx, uploaded_replays_ids):
+    async def _rename_replays(self, ctx, uploaded_replays_ids):
         auth_token = await self._get_auth_token(ctx)
         renamed = []
 
@@ -511,7 +511,7 @@ class BCManager(commands.Cog):
             return False
         return True
 
-    async def _get_tier_subgroup_name(ctx, tier):
+    async def _get_tier_subgroup_name(self, ctx, tier):
         tier_num = await self._get_tier_ranks(ctx)[tier]
         return '{}{}'.format(tier_num, tier)
 
