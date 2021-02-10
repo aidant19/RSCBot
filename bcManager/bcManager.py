@@ -232,7 +232,7 @@ class BCManager(commands.Cog):
             return username, appearances
         return False
 
-    def get_replay_teams(replay):
+    def get_replay_teams(self, replay):
         try:
             blue_name = replay['blue']['name'].title()
         except:
