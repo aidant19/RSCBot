@@ -512,7 +512,7 @@ class BCManager(commands.Cog):
         return True
 
     async def _get_tier_subgroup_name(self, ctx, tier):
-        tier_num = await self._get_tier_ranks(ctx)[tier]
+        tier_num = (await self._get_tier_ranks(ctx))[tier]
         return '{}{}'.format(tier_num, tier)
 
     async def _get_auth_token(self, ctx):
