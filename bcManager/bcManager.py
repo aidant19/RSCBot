@@ -55,7 +55,7 @@ class BCManager(commands.Cog):
 
         await ctx.send("Matching Ballchasing Replay IDs ({}): {}".format(len(replay_ids), ", ".join(replay_ids)))
         
-        tmp_replay_files = await self.download_replays(ctx, replay_ids)
+        tmp_replay_files = await self._download_replays(ctx, replay_ids)
         await ctx.send("Temp replay files to upload ({}): {}".format(len(tmp_replay_files), ", ".join(tmp_replay_files)))
         
         uploaded_ids = await self._upload_replays(ctx, match_subgroup_id, tmp_replay_files)
