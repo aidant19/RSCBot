@@ -20,7 +20,7 @@ defaults = {
     "AccountRegister": config.account_register
 }
 
-class BCManager(commands.cog):
+class BCManager(commands.Cog):
     """Manages aspects of Ballchasing Integrations with RSC"""
 
     def __init__(self, bot):
