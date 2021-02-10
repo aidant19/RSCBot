@@ -276,7 +276,6 @@ class BCManager(commands.Cog):
         return player_id
 
     async def _get_uploader_id(self, ctx, discord_id):
-        await ctx.send("Uploader id: " + discord_id)
         account_register = await self._get_account_register(ctx)
         steam64 = account_register[discord_id][1]
         return steam64
@@ -314,8 +313,10 @@ class BCManager(commands.Cog):
 
         # needs both to override default -- TODO: Remove non-match params (derive logically)
         if not group_owner_discord_id or not top_level_group:
-            group_owner_discord_id = await self._get_steam_id_from_token(ctx, auth_token)
+            bc_group_owner = await self._get_steam_id_from_token(ctx, auth_token)
             top_level_group = await self._get_top_level_group(ctx)
+        else:
+            bc_group_owner = await self._get_uploader_id(ctx, group_owner_discord_id)  # config.group_owner_discord_id
 
         # RSC/<top level group>/<tier num><tier>/Match Day <match day>/<Home> vs <Away>
         tier = (await self.team_manager_cog._roles_for_team(ctx, match['home']))[1].name  # Get tier role's name
@@ -327,7 +328,6 @@ class BCManager(commands.Cog):
         ]
 
         endpoint = '/groups'
-        bc_group_owner = await self._get_uploader_id(ctx, group_owner_discord_id)  # config.group_owner_discord_id
         
         params = [
             # 'player-id={}'.format(bcc_acc_rsc),
