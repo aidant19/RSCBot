@@ -422,7 +422,7 @@ class BCManager(commands.Cog):
         r = await self._bc_get_request(ctx, endpoint, params=params, auth_token=auth_token)
         data = r.json()
 
-        ctx.send(data)
+        await ctx.send(data)
 
         # checks for correct replays
         replay_ids = []
