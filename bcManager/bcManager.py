@@ -419,7 +419,7 @@ class BCManager(commands.Cog):
         ]
 
         auth_token = await self._get_auth_token(ctx)
-        r = await self.bc_get_request(ctx, endpoint, params=params, auth_token=auth_token)
+        r = await self._bc_get_request(ctx, endpoint, params=params, auth_token=auth_token)
         data = r.json()
 
         # checks for correct replays
