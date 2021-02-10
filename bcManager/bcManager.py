@@ -114,7 +114,7 @@ class BCManager(commands.Cog):
 
     @commands.command(aliases=['accountRegister'])
     @commands.guild_only()
-    async def registerAccount(self, ctx, platform, code):
+    async def registerAccount(self, ctx, platform, identifier):
         """Allows user to register account for ballchasing requests. This may be found by searching your appearances on ballchasing.com
 
         Examples:
@@ -146,14 +146,14 @@ class BCManager(commands.Cog):
             return False
         
         account_register = await self._get_account_register(ctx)
-        account_register[member.id] = [platform, identifier]
+        account_register[ctx.message.author.id] = [platform, identifier]
 
         # Register account
         if await self._save_account_register(ctx, account_register):
             await ctx.send("Done")
     
 
-    async def _bc_get_request(ctx, endpoint, params=[], auth_token=None):
+    async def _bc_get_request(self, ctx, endpoint, params=[], auth_token=None):
         if not auth_token:
             auth_token = await self._get_auth_token(ctx)
         
@@ -165,7 +165,7 @@ class BCManager(commands.Cog):
         
         return requests.get(url, headers={'Authorization': auth_token})
 
-    async def _bc_post_request(ctx, endpoint, params=[], auth_token=None, json=None, data=None, files=None):
+    async def _bc_post_request(self, ctx, endpoint, params=[], auth_token=None, json=None, data=None, files=None):
         if not auth_token:
             auth_token = await self._get_auth_token(ctx)
         
@@ -177,7 +177,7 @@ class BCManager(commands.Cog):
         
         return requests.post(url, headers={'Authorization': auth_token}, json=json, data=data, files=files)
 
-    async def _bc_patch_request(ctx, endpoint, params=[], auth_token=None, json=None, data=None):
+    async def _bc_patch_request(self, ctx, endpoint, params=[], auth_token=None, json=None, data=None):
         if not auth_token:
             auth_token = await self._get_auth_token(ctx)
 
@@ -205,7 +205,7 @@ class BCManager(commands.Cog):
             await ctx.send("Sorry {}, you didn't react quick enough. Please try again.".format(user.mention))
             return False
 
-    async def _validate_account(ctx, platform, identifier):
+    async def _validate_account(self, ctx, platform, identifier):
         auth_token = config.auth_token
         endpoint = '/replays'
         params = [
