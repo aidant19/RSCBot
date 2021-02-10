@@ -302,8 +302,7 @@ class BCManager(commands.Cog):
         if not match_day:
             match_day = await self.match_cog._match_day(ctx)
         if not team:
-            teams = await self.team_manager_cog.teams_for_user(ctx, member)
-            team = teams[0]
+            team = (await self.team_manager_cog.teams_for_user(ctx, member))[0]
         
         match = await self.match_cog.get_match_from_day_team(ctx, match_day, team)
         return match
@@ -318,7 +317,7 @@ class BCManager(commands.Cog):
             top_level_group = await self._get_top_level_group(ctx)
 
         # RSC/<top level group>/<tier num><tier>/Match Day <match day>/<Home> vs <Away>
-        tier = await self.team_manager_cog._roles_for_team(ctx, match['home'])[1].name  # Get tier role's name
+        tier = (await self.team_manager_cog._roles_for_team(ctx, match['home']))[1].name  # Get tier role's name
         tier_group = await self._get_tier_subgroup_name(ctx, tier)
         ordered_subgroups = [
             tier_group,
