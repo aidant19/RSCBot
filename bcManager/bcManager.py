@@ -405,7 +405,7 @@ class BCManager(commands.Cog):
         zone_adj = "{}{}".format(adj_char, str(now).split(adj_char)[-1])
 
         date_string = match['matchDate']
-        match_date = datetime.strptime(date_string, '%m %d, %Y').strftime('%Y-%m-%d')
+        match_date = datetime.strptime(date_string, '%B %d, %Y').strftime('%Y-%m-%d')
         start_match_date_rfc3339 = "{}T00:00:00{}".format(match_date, zone_adj)
         end_match_date_rfc3339 = "{}T23:59:59{}".format(match_date, zone_adj)
 
