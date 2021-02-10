@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import os
 import json
 import discord
+import asyncio
 
 from redbot.core import Config
 from redbot.core import commands
@@ -21,6 +22,7 @@ defaults = {
     "TierRank": config.tier_rank,
     "AccountRegister": config.account_register
 }
+verify_timeout = 30
 
 class BCManager(commands.Cog):
     """Manages aspects of Ballchasing Integrations with RSC"""
@@ -224,6 +226,7 @@ class BCManager(commands.Cog):
                 for player in data['list'][0][team_color]['players']:
                     if player['id']['platform'] == platform and player['id']['id'] == identifier:
                         username = player['name']
+                        appearances = data['count']
                         break
         if username:
             return username, appearances
@@ -259,10 +262,10 @@ class BCManager(commands.Cog):
         }
         return teams
 
-    async def _get_steam_id_from_token(ctx, auth_token=None):
+    async def _get_steam_id_from_token(self, ctx, auth_token=None):
         if not auth_token:
             auth_token = await self._get_auth_token(ctx)
-        r = bc_get_request("")
+        r = self._bc_get_request("")
         if r.status_code == 200:
             return r.json()['steam_id']
         return None
@@ -272,12 +275,12 @@ class BCManager(commands.Cog):
         player_id = "{}:{}".format(arr[0], arr[1])
         return player_id
 
-    async def _get_uploader_id(ctx, discord_id):
+    async def _get_uploader_id(self, ctx, discord_id):
         account_register = await self._get_account_register(ctx)
         steam64 = account_register[discord_id][1]
         return steam64
 
-    def is_match_replay(match, replay):
+    def is_match_replay(self, match, replay):
         # checks for correct replays
         #   - My Team Name match
         #   - Other Team name match
@@ -288,14 +291,14 @@ class BCManager(commands.Cog):
         home_team = match['home']       # match cog
         away_team = match['away']       # match cog
 
-        replay_teams = get_replay_teams(replay)
+        replay_teams = self.get_replay_teams(replay)
 
         home_team_found = replay_teams['blue']['name'].lower() in home_team.lower() or replay_teams['orange']['name'].lower() in home_team.lower()
         away_team_found = replay_teams['blue']['name'].lower() in away_team.lower() or replay_teams['orange']['name'].lower() in away_team.lower()
 
         return home_team_found and away_team_found
 
-    async def get_match(member, team=None, match_day=None):
+    async def get_match(self, ctx, member, team=None, match_day=None):
         if not match_day:
             match_day = await self.match_cog._match_day(ctx)
         if not team:
@@ -304,7 +307,7 @@ class BCManager(commands.Cog):
         match = await self.match_cog.get_match_from_day_team(ctx, match_day, team)
         return match
 
-    async def _get_replay_destination(ctx, match, top_level_group=None, group_owner_discord_id=None):
+    async def _get_replay_destination(self, ctx, match, top_level_group=None, group_owner_discord_id=None):
         
         auth_token = await self._get_auth_token(ctx)
 
@@ -357,7 +360,7 @@ class BCManager(commands.Cog):
                     'group={}'.format(next_subgroup_id)
                 ]
 
-                r = bc_get_request(endpoint, params, auth_token)
+                r = self._bc_get_request(endpoint, params, auth_token)
                 data = r.json()
 
             # ## Creating next sub-group
