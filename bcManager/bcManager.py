@@ -41,7 +41,7 @@ class BCManager(commands.Cog):
         """
 
         member = ctx.message.author
-        match = await self.get_match(member, team_name, match_day)
+        match = await self.get_match(ctx, member, team_name, match_day)
         
         if not match:
             await ctx.send(":x: No match found.")
