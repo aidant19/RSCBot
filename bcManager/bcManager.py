@@ -499,7 +499,7 @@ class BCManager(commands.Cog):
             game_number += 1
         return renamed
 
-    def _delete_temp_files(files_to_upload):
+    def _delete_temp_files(self, files_to_upload):
         for replay_filename in files_to_upload:
             if os.path.exists("temp/{}".format(replay_filename)):
                 os.remove("temp/{}".format(replay_filename))
