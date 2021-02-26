@@ -16,10 +16,10 @@ import sys
 import pprint as pp
 
 defaults = {
-    "AuthToken": config.auth_token,
-    "TopLevelGroup": config.top_level_group,
+    "AuthToken": "",
+    "TopLevelGroup": "",
     "TierRank": config.tier_rank,
-    "AccountRegister": config.account_register
+    "AccountRegister": ""
 }
 verify_timeout = 30
 
