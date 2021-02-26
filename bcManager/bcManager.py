@@ -1,4 +1,3 @@
-
 from .config import config
 import requests
 from datetime import datetime, timezone
@@ -33,7 +32,7 @@ class BCManager(commands.Cog):
         self.team_manager_cog = bot.get_cog("TeamManager")
         self.match_cog = bot.get_cog("Match")
     
-    @commands.command(aliases=['bcr', 'ggs'])
+    @commands.command(aliases=['bcr', 'ggs', 'bcpull'])
     @commands.guild_only()
     async def bcreport(self, ctx, team_name=None, match_day=None):
         """
@@ -48,26 +47,33 @@ class BCManager(commands.Cog):
             return False
         
         match_subgroup_id = await self._get_replay_destination(ctx, match)
-        await ctx.send("Match Subgroup ID: {}".format(match_subgroup_id))
-        replay_ids = await self._find_match_replays(ctx, member, match)
+        # await ctx.send("Match Subgroup ID: {}".format(match_subgroup_id))
+        replays_found = await self._find_match_replays(ctx, member, match)
 
-        # TODO: React to confirm with summary?
+        if not replays_found:
+            await ctx.send(":x: No matching replays found.")
+            return False
+        replay_ids, summary = replays_found
+        prompt = "Match summary:\n{summary}\n\n{mention} - Please react to confirm the score summary.".format(summary=summary, mention=member.mention)
+        
+        if not await self._react_prompt(ctx, prompt, "Ballchasing upload cancelled."):
+            return False
 
-        await ctx.send("Matching Ballchasing Replay IDs ({}): {}".format(len(replay_ids), ", ".join(replay_ids)))
+        # await ctx.send("Matching Ballchasing Replay IDs ({}): {}".format(len(replay_ids), ", ".join(replay_ids)))
         
         tmp_replay_files = await self._download_replays(ctx, replay_ids)
-        await ctx.send("Temp replay files to upload ({}): {}".format(len(tmp_replay_files), ", ".join(tmp_replay_files)))
+        # await ctx.send("Temp replay files to upload ({}): {}".format(len(tmp_replay_files), ", ".join(tmp_replay_files)))
         
         uploaded_ids = await self._upload_replays(ctx, match_subgroup_id, tmp_replay_files)
-        await ctx.send("replays in subgroup: {}".format(", ".join(uploaded_ids)))
+        # await ctx.send("replays in subgroup: {}".format(", ".join(uploaded_ids)))
         
         renamed = await self._rename_replays(ctx, uploaded_ids)
-        await ctx.send("replays renamed: {}".format(renamed))
+        # await ctx.send("replays renamed: {}".format(renamed))
         self._delete_temp_files(tmp_replay_files)
         
         await ctx.send(":white_check_mark: Done")
 
-    @commands.command()
+    @commands.command(aliases=['setAuthKey'])
     @commands.guild_only()
     @checks.admin_or_permissions(manage_guild=True)
     async def setAuthToken(self, ctx, auth_token):
@@ -85,6 +91,7 @@ class BCManager(commands.Cog):
     @commands.guild_only()
     @checks.admin_or_permissions(manage_guild=True)
     async def setTierRank(self, ctx, tier, rank):
+        """Sets the tier rank for ordering ballchasing tier subgroups."""
         tiers = await self.team_manager_cog.tiers(ctx)
         tier_found = False
         for t in tiers:
@@ -101,6 +108,16 @@ class BCManager(commands.Cog):
             await ctx.send("The {} Rank was changed from {} to {}".format(tier=tier.Title(), old_rank=old_rank, new_rank=rank))
         else:
             await ctx.send("Done")
+
+    @commands.command()
+    @commands.guild_only()
+    @checks.admin_or_permissions(manage_guild=True)
+    async def clearTierRanks(self, ctx):
+        """Removes all Tier Ranks for Ballchasing Tier Group ordering."""
+        if await self._save_tier_ranks(ctx, {}):
+            await ctx.send("Done")
+        else:
+            await ctx.send(":x: something went wrong...")
 
     @commands.command()
     @commands.guild_only()
@@ -156,6 +173,25 @@ class BCManager(commands.Cog):
         if await self._save_account_register(ctx, account_register):
             await ctx.send("Done")
     
+    @commands.command(aliases=['rmaccount'])
+    @commands.guild_only()
+    async def unregisterAccount(self, ctx):
+        """Unlinks registered account for ballchasing requests."""
+        account_register = await self._get_account_register(ctx)
+        if ctx.message.author.id in account_register:
+            del account_register[ctx.message.author.id]
+            await ctx.send("Done")
+        else:
+            await ctx.send("No account found.")
+
+    @commands.command(aliases=['bcGroup', 'ballchasingGroup', 'bcg'])
+    @commands.guild_only()
+    async def bcgroup(self, ctx):
+        """Get the top-level ballchasing group to see all season match replays."""
+        group_code = await self._get_top_level_group(ctx)
+        url = "https://ballchasing.com/group/{}".format(group_code)
+        await ctx.send("See all season replays in the top level ballchasing group: {}".format())
+
 
     async def _bc_get_request(self, ctx, endpoint, params=[], auth_token=None):
         if not auth_token:
@@ -270,28 +306,38 @@ class BCManager(commands.Cog):
             return r.json()['steam_id']
         return None
 
-    def get_player_id(discord_id):
+    def get_player_id(self, discord_id):
         arr = config.account_register[discord_id]
         player_id = "{}:{}".format(arr[0], arr[1])
         return player_id
 
     async def _get_uploader_id(self, ctx, discord_id):
         account_register = await self._get_account_register(ctx)
-        steam64 = account_register[discord_id][1]
-        return steam64
+        if discord_id in account_register:
+            if account_register[discord_id][0] != 'steam':
+                return account_register[discord_id][1]
+        return None
 
-    def is_match_replay(self, match, replay):
-        # checks for correct replays
-        #   - My Team Name match
-        #   - Other Team name match
+    def is_full_replay(self, replay_data):
+        if replay_data['duration'] < 300:
+            return False
+        if replay_data['blue']['goals'] == replay_data['orange']['goals']:
+            return False
+        for team in ['blue', 'orange']:
+            for player in replay_data[team]:
+                if player['start_time'] == 0:
+                    return True
+        return False
 
-        # Update to pull from discord member
-        match = config.match            # match cog
+    def is_match_replay(self, match, replay_data):
         match_day = match['matchDay']   # match cog
         home_team = match['home']       # match cog
         away_team = match['away']       # match cog
 
-        replay_teams = self.get_replay_teams(replay)
+        if not self.is_full_replay(replay_data):
+            return False
+
+        replay_teams = self.get_replay_teams(replay_data)
 
         home_team_found = replay_teams['blue']['name'].lower() in home_team.lower() or replay_teams['orange']['name'].lower() in home_team.lower()
         away_team_found = replay_teams['blue']['name'].lower() in away_team.lower() or replay_teams['orange']['name'].lower() in away_team.lower()
@@ -385,11 +431,9 @@ class BCManager(commands.Cog):
 
     async def _find_match_replays(self, ctx, member, match):
 
-        member_id = member.id
-        if member.id in await self._get_account_register(ctx):
-            uploader = await self._get_uploader_id(ctx, member.id)
-        else:
-            # Return empty for now
+        uploader = await self._get_uploader_id(ctx, member.id)
+        if not uploader:
+            # Return empty for now TODO: Check for opponent steam
             await ctx.send(":x: No steam account linked to ballchasing.com")
             return []
 
@@ -424,12 +468,33 @@ class BCManager(commands.Cog):
         data = r.json()
 
         # checks for correct replays
+        home_wins = 0
+        away_wins = 0
         replay_ids = []
         for replay in data['list']:
             if self.is_match_replay(match, replay):
+                if replay['blue']['name'] in match['home']:
+                    home = 'blue'
+                    away = 'orange'
+                else:
+                    home = 'orange'
+                    away = 'blue'
                 replay_ids.append(replay['id'])
+                if replay[home]['goals'] > replay[away]['goals']:
+                    home_wins += 1
+                else:
+                    away_wins += 1
 
-        return replay_ids
+        series_summary = "**{home_team} {home_wins} - {away_wins} {away_team}".format(
+            home_team = match['home'],
+            home_wins = home_wins,
+            away_wins = away_wins,
+            away_team = match['away']
+        )
+
+        if replay_ids:
+            return replay_ids, series_summary
+        return None
 
     async def _download_replays(self, ctx, replay_ids):
         auth_token = await self._get_auth_token(ctx)
